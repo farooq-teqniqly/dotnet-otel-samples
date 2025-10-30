@@ -22,6 +22,7 @@ namespace ApiSample
         .WithTracing(t =>
           t.AddAspNetCoreInstrumentation(opts => opts.Filter = null)
             .AddConsoleExporter()
+            .AddEntityFrameworkCoreInstrumentation()
             .AddOtlpExporter(builder.Configuration)
         );
 
