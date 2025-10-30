@@ -1,3 +1,4 @@
+using System.Data;
 using System.Reflection;
 using ApiSample.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,27 @@ namespace ApiSample
 {
   internal static class DependencyInjectionExtensions
   {
+    public static WebApplicationBuilder AddDatabase(this WebApplicationBuilder builder)
+    {
+      var connectionString =
+        builder.Configuration.GetConnectionString("WeatherDb")
+        ?? throw new InvalidOperationException("Database connection string not configured");
+
+      builder.Services.AddDbContext<ApplicationDbContext>(opts =>
+      {
+        opts.UseSqlServer(connectionString).UseSnakeCaseNamingConvention();
+
+        if (builder.Environment.IsDevelopment())
+        {
+          opts.EnableSensitiveDataLogging();
+        }
+      });
+
+      builder.AddDapper();
+
+      return builder;
+    }
+
     public static WebApplicationBuilder AddOpenTelemetry(this WebApplicationBuilder builder)
     {
       builder
@@ -23,47 +45,9 @@ namespace ApiSample
           t.AddAspNetCoreInstrumentation(opts => opts.Filter = null)
             .AddConsoleExporter()
             .AddEntityFrameworkCoreInstrumentation()
+            .AddSqlClientInstrumentation()
             .AddOtlpExporter(builder.Configuration)
         );
-
-      return builder;
-    }
-
-    public static TracerProviderBuilder AddOtlpExporter(
-      this TracerProviderBuilder builder,
-      IConfiguration configuration
-    )
-    {
-      var otelEndpoint = configuration["Otel:Endpoint"];
-
-      if (string.IsNullOrWhiteSpace(otelEndpoint))
-      {
-        return builder;
-      }
-
-      builder.AddOtlpExporter(opts =>
-      {
-        opts.Endpoint = new Uri(otelEndpoint);
-      });
-
-      return builder;
-    }
-
-    public static WebApplicationBuilder AddSqlServer(this WebApplicationBuilder builder)
-    {
-      var connectionString =
-        builder.Configuration.GetConnectionString("WeatherDb")
-        ?? throw new InvalidOperationException("Database connection string not configured");
-
-      builder.Services.AddDbContext<ApplicationDbContext>(opts =>
-      {
-        opts.UseSqlServer(connectionString).UseSnakeCaseNamingConvention();
-
-        if (builder.Environment.IsDevelopment())
-        {
-          opts.EnableSensitiveDataLogging();
-        }
-      });
 
       return builder;
     }
@@ -158,6 +142,44 @@ namespace ApiSample
 #pragma warning restore S2139
         }
       }
+    }
+
+    private static WebApplicationBuilder AddDapper(this WebApplicationBuilder builder)
+    {
+      builder.Services.AddScoped<IDbConnection>(sp =>
+      {
+        var dbContext = sp.GetRequiredService<ApplicationDbContext>();
+        var connection = dbContext.Database.GetDbConnection();
+
+        if (connection.State != ConnectionState.Open)
+        {
+          connection.Open();
+        }
+
+        return connection;
+      });
+
+      return builder;
+    }
+
+    private static TracerProviderBuilder AddOtlpExporter(
+      this TracerProviderBuilder builder,
+      ConfigurationManager configuration
+    )
+    {
+      var otelEndpoint = configuration["Otel:Endpoint"];
+
+      if (string.IsNullOrWhiteSpace(otelEndpoint))
+      {
+        return builder;
+      }
+
+      builder.AddOtlpExporter(opts =>
+      {
+        opts.Endpoint = new Uri(otelEndpoint);
+      });
+
+      return builder;
     }
   }
 }

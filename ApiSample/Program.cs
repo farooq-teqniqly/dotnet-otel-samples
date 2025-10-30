@@ -9,7 +9,7 @@ namespace ApiSample
       builder.Services.AddControllers();
       builder.Services.AddOpenApi();
       builder.AddOpenTelemetry();
-      builder.AddSqlServer();
+      builder.AddDatabase();
       builder.Services.AddEndpointsApiExplorer();
       builder.Services.AddSwaggerGen();
 

@@ -1,5 +1,7 @@
+using System.Data;
 using System.Diagnostics;
 using System.Security.Cryptography;
+using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,13 +11,13 @@ namespace ApiSample.Controllers
   [Route("[controller]")]
   public class WeatherForecastController : ControllerBase
   {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly IDbConnection _dbConnection;
 
-    public WeatherForecastController(ApplicationDbContext dbContext)
+    public WeatherForecastController(IDbConnection dbConnection)
     {
-      ArgumentNullException.ThrowIfNull(dbContext);
+      ArgumentNullException.ThrowIfNull(dbConnection);
 
-      _dbContext = dbContext;
+      _dbConnection = dbConnection;
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
@@ -23,10 +25,9 @@ namespace ApiSample.Controllers
     {
       Activity.Current?.SetTag("user.is_authenticated", HttpContext.User.Identity?.IsAuthenticated);
 
-      var summaries = await _dbContext
-        .Summaries.Select(s => s.Value)
-        .ToArrayAsync(HttpContext.RequestAborted)
-        .ConfigureAwait(false);
+      var sql = "SELECT value FROM dbo.summaries (NOLOCK);";
+
+      var summaries = (await _dbConnection.QueryAsync<string>(sql).ConfigureAwait(false)).ToArray();
 
       return
       [
