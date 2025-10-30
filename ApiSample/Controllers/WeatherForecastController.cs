@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,6 +25,8 @@ namespace ApiSample.Controllers
     [HttpGet(Name = "GetWeatherForecast")]
     public IEnumerable<WeatherForecast> Get()
     {
+      Activity.Current?.SetTag("user.is_authenticated", HttpContext.User.Identity?.IsAuthenticated);
+
       return
       [
         .. Enumerable
