@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApiSample.Controllers
 {
@@ -8,24 +9,24 @@ namespace ApiSample.Controllers
   [Route("[controller]")]
   public class WeatherForecastController : ControllerBase
   {
-    private static readonly string[] _summaries =
-    [
-      "Freezing",
-      "Bracing",
-      "Chilly",
-      "Cool",
-      "Mild",
-      "Warm",
-      "Balmy",
-      "Hot",
-      "Sweltering",
-      "Scorching",
-    ];
+    private readonly ApplicationDbContext _dbContext;
+
+    public WeatherForecastController(ApplicationDbContext dbContext)
+    {
+      ArgumentNullException.ThrowIfNull(dbContext);
+
+      _dbContext = dbContext;
+    }
 
     [HttpGet(Name = "GetWeatherForecast")]
-    public IEnumerable<WeatherForecast> Get()
+    public async Task<IEnumerable<WeatherForecast>> Get()
     {
       Activity.Current?.SetTag("user.is_authenticated", HttpContext.User.Identity?.IsAuthenticated);
+
+      var summaries = await _dbContext
+        .Summaries.Select(s => s.Value)
+        .ToArrayAsync(HttpContext.RequestAborted)
+        .ConfigureAwait(false);
 
       return
       [
@@ -35,7 +36,7 @@ namespace ApiSample.Controllers
           {
             Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
             TemperatureC = RandomNumberGenerator.GetInt32(-20, 55),
-            Summary = _summaries[RandomNumberGenerator.GetInt32(_summaries.Length)],
+            Summary = summaries[RandomNumberGenerator.GetInt32(summaries.Length)],
           }),
       ];
     }

@@ -2,13 +2,14 @@ namespace ApiSample
 {
   internal static class Program
   {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
       var builder = WebApplication.CreateBuilder(args);
 
       builder.Services.AddControllers();
       builder.Services.AddOpenApi();
       builder.AddOpenTelemetry();
+      builder.AddSqlServer();
       builder.Services.AddEndpointsApiExplorer();
       builder.Services.AddSwaggerGen();
 
@@ -19,15 +20,20 @@ namespace ApiSample
         app.MapOpenApi();
         app.UseSwagger();
         app.UseSwaggerUI();
+
+        var cancellationToken = app.Lifetime.ApplicationStopping;
+
+        await app.ApplyMigrationsAsync(cancellationToken).ConfigureAwait(false);
+        await app.SeedDatabaseAsync(cancellationToken).ConfigureAwait(false);
       }
 
       app.UseHttpsRedirection();
-
+      app.UseCors();
       app.UseAuthorization();
 
       app.MapControllers();
 
-      app.Run();
+      await app.RunAsync().ConfigureAwait(false);
     }
   }
 }

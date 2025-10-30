@@ -97,3 +97,7 @@ dotnet_diagnostic.CA1303.severity = suggestion
 [Program.cs]
 # CA2007: Do not directly await a Task without calling ConfigureAwait
 dotnet_diagnostic.CA2007.severity = none
+
+[ApiSample/Migrations/*.cs]
+# CA1062: Validate arguments of public methods
+dotnet_diagnostic.CA1062.severity = none
