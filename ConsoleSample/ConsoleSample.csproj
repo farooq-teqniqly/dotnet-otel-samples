@@ -4,4 +4,9 @@
 		<OutputType>Exe</OutputType>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="OpenTelemetry" />
+	  <PackageReference Include="OpenTelemetry.Exporter.Console" />
+	</ItemGroup>
+
 </Project>
