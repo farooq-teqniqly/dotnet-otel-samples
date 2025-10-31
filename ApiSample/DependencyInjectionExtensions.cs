@@ -2,6 +2,7 @@ using System.Data;
 using System.Reflection;
 using ApiSample.Entities;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -36,17 +37,20 @@ namespace ApiSample
         .Services.AddOpenTelemetry()
         .ConfigureResource(r =>
           r.AddService(
-            "ApiSample",
-            "Teqniqly",
+            ApplicationDiagnostics.ServiceName,
+            ApplicationDiagnostics.ServiceNamespace,
             Assembly.GetExecutingAssembly().GetName().Version!.ToString()
           )
         )
         .WithTracing(t =>
-          t.AddAspNetCoreInstrumentation(opts => opts.Filter = null)
+          t.AddAspNetCoreInstrumentation()
             .AddConsoleExporter()
             .AddEntityFrameworkCoreInstrumentation()
             .AddSqlClientInstrumentation()
             .AddOtlpExporter(builder.Configuration)
+        )
+        .WithMetrics(m =>
+          m.AddMeter(ApplicationDiagnostics.Meter.Name).AddConsoleExporter().AddPrometheusExporter()
         );
 
       return builder;

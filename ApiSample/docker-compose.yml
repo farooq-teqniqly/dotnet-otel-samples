@@ -4,3 +4,11 @@ services:
     ports:
      - "16686:16686"
      - "4317:4317"
+  prometheus:
+    image: prom/prometheus:v3.7.3
+    ports:
+     - "9090:9090"
+    volumes:
+     -  ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+     -  '--config.file=/etc/prometheus/prometheus.yml'
