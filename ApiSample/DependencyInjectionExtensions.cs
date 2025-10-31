@@ -50,7 +50,13 @@ namespace ApiSample
             .AddOtlpExporter(builder.Configuration)
         )
         .WithMetrics(m =>
-          m.AddMeter(ApplicationDiagnostics.Meter.Name).AddConsoleExporter().AddPrometheusExporter()
+          m.AddMeter(ApplicationDiagnostics.Meter.Name)
+            .AddConsoleExporter()
+            .AddPrometheusExporter()
+            .AddAspNetCoreInstrumentation()
+            .AddMeter("Microsoft.AspNetCore.Hosting")
+            .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
+            .AddSqlClientInstrumentation()
         );
 
       return builder;
