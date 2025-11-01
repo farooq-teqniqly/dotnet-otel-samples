@@ -2,7 +2,6 @@ using System.Data;
 using System.Reflection;
 using ApiSample.Entities;
 using Microsoft.EntityFrameworkCore;
-using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
