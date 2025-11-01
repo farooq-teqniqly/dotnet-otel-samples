@@ -21,3 +21,7 @@ services:
     environment:
         GF_AUTH_ANONYMOUS_ENABLED: "true"
         GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+  loki:
+    image: grafana/loki:3.5
+    ports:
+        - "3100:3100"

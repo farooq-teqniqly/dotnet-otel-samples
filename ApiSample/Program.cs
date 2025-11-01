@@ -27,7 +27,6 @@ namespace ApiSample
         await app.SeedDatabaseAsync(cancellationToken).ConfigureAwait(false);
       }
 
-      app.UseOpenTelemetryPrometheusScrapingEndpoint();
       app.UseHttpsRedirection();
       app.UseCors();
       app.UseAuthorization();
