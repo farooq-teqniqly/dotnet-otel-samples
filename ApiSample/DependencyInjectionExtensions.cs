@@ -2,6 +2,8 @@ using System.Data;
 using System.Reflection;
 using ApiSample.Entities;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -52,12 +54,13 @@ namespace ApiSample
         .WithMetrics(m =>
           m.AddMeter(ApplicationDiagnostics.Meter.Name)
             .AddConsoleExporter()
-            .AddPrometheusExporter()
+            .AddOtlpExporter(builder.Configuration)
             .AddAspNetCoreInstrumentation()
             .AddMeter("Microsoft.AspNetCore.Hosting")
             .AddMeter("Microsoft.AspNetCore.Server.Kestrel")
             .AddSqlClientInstrumentation()
-        );
+        )
+        .WithLogging(l => l.AddConsoleExporter().AddOtlpExporter(builder.Configuration));
 
       return builder;
     }
@@ -172,10 +175,11 @@ namespace ApiSample
       return builder;
     }
 
-    private static TracerProviderBuilder AddOtlpExporter(
-      this TracerProviderBuilder builder,
+    private static TBuilder AddOtlpExporter<TBuilder>(
+      this TBuilder builder,
       ConfigurationManager configuration
     )
+      where TBuilder : class
     {
       var otelEndpoint = configuration["Otel:Endpoint"];
 
@@ -184,10 +188,29 @@ namespace ApiSample
         return builder;
       }
 
-      builder.AddOtlpExporter(opts =>
+      switch (builder)
       {
-        opts.Endpoint = new Uri(otelEndpoint);
-      });
+        case TracerProviderBuilder tracerBuilder:
+          tracerBuilder.AddOtlpExporter(opts =>
+          {
+            opts.Endpoint = new Uri(otelEndpoint);
+          });
+          break;
+        case MeterProviderBuilder meterProviderBuilder:
+          meterProviderBuilder.AddOtlpExporter(opts =>
+          {
+            opts.Endpoint = new Uri(otelEndpoint);
+          });
+          break;
+        case LoggerProviderBuilder loggerProviderBuilder:
+          loggerProviderBuilder.AddOtlpExporter(opts =>
+          {
+            opts.Endpoint = new Uri(otelEndpoint);
+          });
+          break;
+        default:
+          throw new InvalidOperationException($"{typeof(TBuilder)} is not a valid type.");
+      }
 
       return builder;
     }
