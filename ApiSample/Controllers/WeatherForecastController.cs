@@ -23,6 +23,13 @@ namespace ApiSample.Controllers
     [HttpGet(Name = "GetWeatherForecast")]
     public async Task<IEnumerable<WeatherForecast>> Get()
     {
+      var tier = GetTier();
+
+      ApplicationDiagnostics.WeatherForecastRequestsCounter.Add(
+        1,
+        new KeyValuePair<string, object?>("user.membership", tier.ToString())
+      );
+
       Activity.Current?.SetTag("user.is_authenticated", HttpContext.User.Identity?.IsAuthenticated);
 
       var sql = "SELECT value FROM dbo.summaries (NOLOCK);";
@@ -41,5 +48,14 @@ namespace ApiSample.Controllers
           }),
       ];
     }
+
+    private static Tier GetTier() =>
+      RandomNumberGenerator.GetInt32(0, 2) == 0 ? Tier.Standard : Tier.Premium;
+  }
+
+  internal enum Tier
+  {
+    Standard,
+    Premium,
   }
 }
