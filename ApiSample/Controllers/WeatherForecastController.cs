@@ -12,18 +12,26 @@ namespace ApiSample.Controllers
   public class WeatherForecastController : ControllerBase
   {
     private readonly IDbConnection _dbConnection;
+    private readonly ILogger<WeatherForecastController> _logger;
 
-    public WeatherForecastController(IDbConnection dbConnection)
+    public WeatherForecastController(
+      IDbConnection dbConnection,
+      ILogger<WeatherForecastController> logger
+    )
     {
       ArgumentNullException.ThrowIfNull(dbConnection);
+      ArgumentNullException.ThrowIfNull(logger);
 
       _dbConnection = dbConnection;
+      _logger = logger;
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
     public async Task<IEnumerable<WeatherForecast>> Get()
     {
       var tier = GetTier();
+
+      _logger.LogDebug("Incoming request for tier {Tier}", tier.ToString());
 
       ApplicationDiagnostics.WeatherForecastRequestsCounter.Add(
         1,
