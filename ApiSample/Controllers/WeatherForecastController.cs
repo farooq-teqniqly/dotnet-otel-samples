@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using Dapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using OpenTelemetry;
 
 namespace ApiSample.Controllers
 {
@@ -32,6 +32,8 @@ namespace ApiSample.Controllers
       var tier = GetTier();
 
       _logger.LogDebug("Incoming request for tier {Tier}", tier.ToString());
+
+      Baggage.SetBaggage("user.membership", tier.ToString());
 
       ApplicationDiagnostics.WeatherForecastRequestsCounter.Add(
         1,
